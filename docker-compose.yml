@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    container_name: amocrm-webhook-integration
+    restart: unless-stopped
+    ports:
+      - "${EXTERNAL_PORT:-3000}:${INTERNAL_PORT:-3000}"
+    env_file:
+      - .env
+    environment:
+      - PORT=${INTERNAL_PORT:-3000}
+      - INTERNAL_PORT=${INTERNAL_PORT:-3000}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:$${INTERNAL_PORT:-3000}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
