@@ -185,6 +185,10 @@ function formatNoteText(data) {
  */
 export async function handleWebhook(body) {
   try {
+    // Логируем полученное тело запроса
+    console.log('[webhookHandler] Получено тело запроса:');
+    console.log(JSON.stringify(body, null, 2));
+    
     // Парсим данные из webhook
     const data = parseWebhookData(body);
 

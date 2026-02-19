@@ -13,26 +13,18 @@ const PORT = process.env.INTERNAL_PORT || process.env.PORT || 3000;
 // Middleware для парсинга JSON
 app.use(express.json());
 
-// Логирование запросов (только для webhook)
-app.use((req, res, next) => {
-  if (req.path === '/webhook') {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    console.log('[app] Входящий запрос:', JSON.stringify(req.body, null, 2));
-  }
-  next();
-});
-
 /**
  * POST /webhook - обработка входящих webhook
  */
 app.post('/webhook', async (req, res) => {
   try {
     // Логируем входящий запрос
-    console.log('\n========== ВХОДЯЩИЙ ЗАПРОС ==========');
+    console.log('\n' + '='.repeat(50));
     console.log(`[${new Date().toISOString()}] POST /webhook`);
-    console.log('Тело запроса:');
+    console.log('='.repeat(50));
+    console.log('ВХОДЯЩИЙ ЗАПРОС (req.body):');
     console.log(JSON.stringify(req.body, null, 2));
-    console.log('=====================================\n');
+    console.log('='.repeat(50) + '\n');
 
     // Проверяем наличие токена
     if (!tokenStore.hasToken()) {
