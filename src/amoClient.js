@@ -177,23 +177,36 @@ export async function createContact(name, phone, email = null, company = null, p
     contactData[0].custom_fields_values = customFields;
   }
 
-  // Добавляем компанию
+  // Добавляем компанию через company_name
   if (company) {
     contactData[0].company_name = company;
-    // Также привязываем компанию через _embedded для надежности
-    const companyObj = await findOrCreateCompany(company);
-    if (companyObj) {
-      contactData[0]._embedded = {
-        companies: [{ id: companyObj.id }],
-      };
-    }
   }
 
   try {
     const response = await amoRequest('POST', '/api/v4/contacts', contactData);
     
     if (response._embedded?.contacts?.[0]) {
-      return response._embedded.contacts[0];
+      const createdContact = response._embedded.contacts[0];
+      
+      // Привязываем компанию к контакту через _embedded.companies для отображения в карточке
+      if (company) {
+        const companyObj = await findOrCreateCompany(company);
+        if (companyObj) {
+          try {
+            await amoRequest('PATCH', `/api/v4/contacts/${createdContact.id}`, [{
+              id: createdContact.id,
+              _embedded: {
+                companies: [{ id: companyObj.id }],
+              },
+            }]);
+          } catch (err) {
+            // Игнорируем ошибку, если компания уже привязана
+            console.warn('[amoClient] Не удалось привязать компанию к контакту:', err.message);
+          }
+        }
+      }
+      
+      return createdContact;
     }
     
     throw new Error('Контакт не был создан');
@@ -245,24 +258,33 @@ export async function updateContact(contactId, name, phone, email = null, compan
     contactData[0].custom_fields_values = Array.from(customFieldsMap.values());
   }
 
-  // Компания - всегда устанавливаем, если передана, иначе сохраняем существующую
+  // Компания
   if (company) {
     contactData[0].company_name = company;
-    // Также привязываем компанию через _embedded для надежности
-    const companyObj = await findOrCreateCompany(company);
-    if (companyObj) {
-      if (!contactData[0]._embedded) {
-        contactData[0]._embedded = {};
-      }
-      contactData[0]._embedded.companies = [{ id: companyObj.id }];
-    }
   } else if (existingContact?.company_name) {
-    // Сохраняем существующую компанию, если новая не указана
     contactData[0].company_name = existingContact.company_name;
   }
 
   try {
     const response = await amoRequest('PATCH', `/api/v4/contacts/${contactId}`, contactData);
+    
+    // Привязываем компанию к контакту через _embedded.companies для отображения в карточке
+    if (company) {
+      const companyObj = await findOrCreateCompany(company);
+      if (companyObj) {
+        try {
+          await amoRequest('PATCH', `/api/v4/contacts/${contactId}`, [{
+            id: contactId,
+            _embedded: {
+              companies: [{ id: companyObj.id }],
+            },
+          }]);
+        } catch (err) {
+          // Игнорируем ошибку, если компания уже привязана
+          console.warn('[amoClient] Не удалось привязать компанию к контакту:', err.message);
+        }
+      }
+    }
     
     if (response._embedded?.contacts?.[0]) {
       return response._embedded.contacts[0];
