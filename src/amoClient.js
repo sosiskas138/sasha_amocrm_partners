@@ -264,9 +264,48 @@ export async function updateContact(contactId, name, phone, email = null, compan
 }
 
 /**
+ * Найти или создать компанию
+ */
+async function findOrCreateCompany(companyName) {
+  if (!companyName) return null;
+
+  try {
+    // Ищем компанию по названию
+    const response = await amoRequest('GET', `/api/v4/companies?query=${encodeURIComponent(companyName)}`);
+    
+    if (response._embedded?.companies?.length > 0) {
+      // Проверяем точное совпадение названия
+      for (const company of response._embedded.companies) {
+        if (company.name === companyName) {
+          return company;
+        }
+      }
+      // Если точного совпадения нет, возвращаем первую найденную
+      return response._embedded.companies[0];
+    }
+
+    // Компания не найдена, создаем новую
+    const companyData = [{
+      name: companyName,
+    }];
+
+    const createResponse = await amoRequest('POST', '/api/v4/companies', companyData);
+    
+    if (createResponse._embedded?.companies?.[0]) {
+      return createResponse._embedded.companies[0];
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[amoClient] Ошибка работы с компанией:', error.message);
+    return null;
+  }
+}
+
+/**
  * Создать сделку
  */
-export async function createLead(contactId, name, budget = null, tags = []) {
+export async function createLead(contactId, name, budget = null, tags = [], companyName = null) {
   const leadData = [{
     name: name,
     price: budget || 0,
@@ -276,6 +315,14 @@ export async function createLead(contactId, name, budget = null, tags = []) {
       contacts: [{ id: contactId }],
     },
   }];
+
+  // Добавляем компанию, если указана
+  if (companyName) {
+    const company = await findOrCreateCompany(companyName);
+    if (company) {
+      leadData[0]._embedded.companies = [{ id: company.id }];
+    }
+  }
 
   if (tags?.length > 0) {
     leadData[0]._embedded.tags = tags.map(tag => ({ name: tag }));

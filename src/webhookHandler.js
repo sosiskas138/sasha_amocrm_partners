@@ -213,7 +213,8 @@ export async function handleWebhook(body) {
       contact.id,
       leadName,
       data.budget,
-      data.tags
+      data.tags,
+      data.company
     );
 
     // Формируем и добавляем примечание
