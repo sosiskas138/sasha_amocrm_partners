@@ -177,11 +177,6 @@ export async function createContact(name, phone, email = null, company = null, p
     contactData[0].custom_fields_values = customFields;
   }
 
-  // Добавляем компанию через company_name
-  if (company) {
-    contactData[0].company_name = company;
-  }
-
   try {
     const response = await amoRequest('POST', '/api/v4/contacts', contactData);
     
@@ -236,13 +231,6 @@ export async function updateContact(contactId, name, phone, email = null, compan
 
   if (customFieldsMap.size > 0) {
     contactData[0].custom_fields_values = Array.from(customFieldsMap.values());
-  }
-
-  // Компания
-  if (company) {
-    contactData[0].company_name = company;
-  } else if (existingContact?.company_name) {
-    contactData[0].company_name = existingContact.company_name;
   }
 
   try {
@@ -317,14 +305,6 @@ export async function createLead(contactId, name, budget = null, tags = [], comp
       contacts: [{ id: contactId }],
     },
   }];
-
-  // Добавляем компанию, если указана
-  if (companyName) {
-    const company = await findOrCreateCompany(companyName);
-    if (company) {
-      leadData[0]._embedded.companies = [{ id: company.id }];
-    }
-  }
 
   if (tags?.length > 0) {
     leadData[0]._embedded.tags = tags.map(tag => ({ name: tag }));
