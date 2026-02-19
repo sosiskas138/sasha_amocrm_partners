@@ -177,8 +177,16 @@ export async function createContact(name, phone, email = null, company = null, p
     contactData[0].custom_fields_values = customFields;
   }
 
+  // Добавляем компанию
   if (company) {
     contactData[0].company_name = company;
+    // Также привязываем компанию через _embedded для надежности
+    const companyObj = await findOrCreateCompany(company);
+    if (companyObj) {
+      contactData[0]._embedded = {
+        companies: [{ id: companyObj.id }],
+      };
+    }
   }
 
   try {
@@ -237,10 +245,20 @@ export async function updateContact(contactId, name, phone, email = null, compan
     contactData[0].custom_fields_values = Array.from(customFieldsMap.values());
   }
 
-  // Компания
-  contactData[0].company_name = company || existingContact?.company_name || null;
-  if (!contactData[0].company_name) {
-    delete contactData[0].company_name;
+  // Компания - всегда устанавливаем, если передана, иначе сохраняем существующую
+  if (company) {
+    contactData[0].company_name = company;
+    // Также привязываем компанию через _embedded для надежности
+    const companyObj = await findOrCreateCompany(company);
+    if (companyObj) {
+      if (!contactData[0]._embedded) {
+        contactData[0]._embedded = {};
+      }
+      contactData[0]._embedded.companies = [{ id: companyObj.id }];
+    }
+  } else if (existingContact?.company_name) {
+    // Сохраняем существующую компанию, если новая не указана
+    contactData[0].company_name = existingContact.company_name;
   }
 
   try {
