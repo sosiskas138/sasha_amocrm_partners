@@ -27,6 +27,13 @@ app.use((req, res, next) => {
  */
 app.post('/webhook', async (req, res) => {
   try {
+    // Логируем входящий запрос
+    console.log('\n========== ВХОДЯЩИЙ ЗАПРОС ==========');
+    console.log(`[${new Date().toISOString()}] POST /webhook`);
+    console.log('Тело запроса:');
+    console.log(JSON.stringify(req.body, null, 2));
+    console.log('=====================================\n');
+
     // Проверяем наличие токена
     if (!tokenStore.hasToken()) {
       console.error('[app] Токен не установлен');
