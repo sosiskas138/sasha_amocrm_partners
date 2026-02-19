@@ -186,27 +186,7 @@ export async function createContact(name, phone, email = null, company = null, p
     const response = await amoRequest('POST', '/api/v4/contacts', contactData);
     
     if (response._embedded?.contacts?.[0]) {
-      const createdContact = response._embedded.contacts[0];
-      
-      // Привязываем компанию к контакту через _embedded.companies для отображения в карточке
-      if (company) {
-        const companyObj = await findOrCreateCompany(company);
-        if (companyObj) {
-          try {
-            await amoRequest('PATCH', `/api/v4/contacts/${createdContact.id}`, [{
-              id: createdContact.id,
-              _embedded: {
-                companies: [{ id: companyObj.id }],
-              },
-            }]);
-          } catch (err) {
-            // Игнорируем ошибку, если компания уже привязана
-            console.warn('[amoClient] Не удалось привязать компанию к контакту:', err.message);
-          }
-        }
-      }
-      
-      return createdContact;
+      return response._embedded.contacts[0];
     }
     
     throw new Error('Контакт не был создан');
@@ -267,24 +247,6 @@ export async function updateContact(contactId, name, phone, email = null, compan
 
   try {
     const response = await amoRequest('PATCH', `/api/v4/contacts/${contactId}`, contactData);
-    
-    // Привязываем компанию к контакту через _embedded.companies для отображения в карточке
-    if (company) {
-      const companyObj = await findOrCreateCompany(company);
-      if (companyObj) {
-        try {
-          await amoRequest('PATCH', `/api/v4/contacts/${contactId}`, [{
-            id: contactId,
-            _embedded: {
-              companies: [{ id: companyObj.id }],
-            },
-          }]);
-        } catch (err) {
-          // Игнорируем ошибку, если компания уже привязана
-          console.warn('[amoClient] Не удалось привязать компанию к контакту:', err.message);
-        }
-      }
-    }
     
     if (response._embedded?.contacts?.[0]) {
       return response._embedded.contacts[0];

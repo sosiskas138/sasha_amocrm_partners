@@ -125,9 +125,9 @@ function formatDateTime(dateTimeString, timezone = 'МСК') {
 function formatNoteText(data) {
   const parts = [];
 
-  // Компания в начале жирным
+  // Компания в начале
   if (data.company) {
-    parts.push(`<b>Компания: ${data.company}</b>`);
+    parts.push(`Компания: ${data.company}`);
     parts.push(''); // Пустая строка для разделения
   }
 
