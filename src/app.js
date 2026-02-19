@@ -17,6 +17,7 @@ app.use(express.json());
 app.use((req, res, next) => {
   if (req.path === '/webhook') {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log('[app] Входящий запрос:', JSON.stringify(req.body, null, 2));
   }
   next();
 });
